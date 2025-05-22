@@ -1,0 +1,10 @@
+[package]
+name = "tests"
+version.workspace = true
+edition.workspace = true
+
+[dev-dependencies]
+sails-rs = { workspace = true, features = ["gtest"] }
+contract = { workspace = true, features = ["wasm-binary"] }
+client.workspace = true
+tokio.workspace = true

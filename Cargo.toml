@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["contract", "client", "tests", "wasm"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
+contract = { path = "contract" }
+client = { path = "client" }
+fs2 = "0.4.2"
+gstd = "=1.8"
+gclient = "=1.8"
+gear-core = "=1.8"
+mockall = "0.12"
+sails-client-gen = "=0.8.0"
+sails-idl-gen = "=0.8.0"
+sails-rs = "=0.8.0"
+tokio = { version = "1.41", features = ["rt", "macros"] }

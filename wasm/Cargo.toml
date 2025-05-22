@@ -1,0 +1,16 @@
+[package]
+name = "wasm"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+contract ={ workspace = true, features = ["wasm-binary"] }
+
+[build-dependencies]
+sails-rs = { workspace = true, features = ["wasm-builder"] }
+sails-client-gen.workspace = true
+sails-idl-gen.workspace = true
+contract ={ workspace = true, features = ["wasm-binary"] }
+
+[features]
+wasm-binary = []
