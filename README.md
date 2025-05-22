@@ -21,7 +21,7 @@ Contract crates:
 
 when you compile your smart contract, it will generate some files inside an `out` directory that you will need:
 
-- `contract_clinte.rs`: File to be used to send message to this smart contract.
+- `contract_clint.rs`: File to be used to send message to this smart contract.
 - `contract.id`: File that contains detailed information about the application, including:
     + *Types*: Custom types used within the program.
     + *Constructors*: The program's constructor.

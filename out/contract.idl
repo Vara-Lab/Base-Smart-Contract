@@ -1,0 +1,30 @@
+type ContractResponse = enum {
+  GreenReceived,
+  YellowReceived,
+  RedReceived,
+};
+
+type IoContractState = struct {
+  owner: actor_id,
+  current_light: Light,
+  callers: vec struct { actor_id, Light },
+};
+
+type Light = enum {
+  Green,
+  Red,
+  Yellow,
+};
+
+constructor {
+  New : ();
+};
+
+service TrafficLight {
+  Green : () -> ContractResponse;
+  Red : () -> ContractResponse;
+  Yellow : () -> ContractResponse;
+  query ContractOwner : () -> actor_id;
+  query TrafficLight : () -> IoContractState;
+};
+
