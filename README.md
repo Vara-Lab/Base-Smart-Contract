@@ -72,7 +72,7 @@ when you compile your smart contract, it will generate some files inside an `tar
 
 You can also program your smart contract from GitPod by clicking the following button (The necessary packages and dependencies will be installed automatically):
 
-<p align="center"
+<p align="center">
   <a href="https://gitpod.io/#https://github.com/Vara-Lab/Base-Smart-Contract.git" target="_blank">
     <img src="https://gitpod.io/button/open-in-gitpod.svg" width="240" alt="Gitpod">
   </a>
