@@ -1,4 +1,4 @@
-image: ghcr.io/vara-lab/base-smart-contract-gitpod:latest
+
 tasks:
   - init: |
       rustup install 1.89.0
