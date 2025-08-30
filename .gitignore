@@ -1,2 +1,3 @@
 /target
-./wasm/.binpath
+.binpath
+Cargo.lock

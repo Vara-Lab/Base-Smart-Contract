@@ -1,4 +1,4 @@
 #![no_std]
 
-// Incorporate the generated code based on the idl file
+// Incorporate code generated based on the IDL file
 include!(concat!(env!("OUT_DIR"), "/contract_client.rs"));
