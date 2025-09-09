@@ -1,12 +1,12 @@
 [![Open in Gitpod](https://img.shields.io/badge/Open_in-Gitpod-white?logo=gitpod)]( https://gitpod.io/new/#https://github.com/Vara-Lab/Base-Smart-Contract.git)
 
-# Base contract
+# Base smart contract
 
-Base contract for [Vara Network](https://vara.network/) using Sails.
+Base smart contract for [Vara Network](https://vara.network/) using Sails.
 
 ## ⚙️ Settings
 
-### Rust: You need to have rust 1.89 or newer to be able to compile your contract:
+### Rust: You need to have rust 1.88 to be able to compile your contract:
 
 > Note: GitPod will automatically execute these commands.
 
@@ -20,7 +20,7 @@ rustup target add wasm32v1-none
 
 - Install the wasm-opt for contract compilations:
 
-```bash 
+```bash       
 sudo apt install binaryen
 ```
 
@@ -30,7 +30,7 @@ The contract works under a workspace which helps with the management of crate ve
 
 Contract crates:
 
-- `client`: This is used only for testing, it generates the contract client and incorporates it its your code.
+- `client`: This crate generates the contract client and incorporates it in its code, it can be used in tests.
 - `app`: Here goes all the business logic of the smart contract.
 
     > **Note:**
@@ -40,7 +40,7 @@ Contract crates:
 
 when you compile your smart contract, it will generate some files inside an `target/wasm32-gear/release` directory that you will need:
 
-- `contract_clint.rs`: File to be used to send message to this smart contract.
+- `contract_client.rs`: File to be used to send message to this smart contract.
 - `contract.idl`: File that contains detailed information about the application, including:
     + *Types*: Custom types used within the program.
     + *Constructors*: The program's constructor.
@@ -58,15 +58,35 @@ when you compile your smart contract, it will generate some files inside an `tar
     ```
 
 - ✅ `Tests`: to tests your contract code you can execute:
-    - To do unit testing with mocks (and cfg(test) in each service):
+    - To do unit testing with Syscalls mocks (and cfg(test) in each service):
         ```sh
         cargo test -p contract-app
+        ```
+
+        or 
+
+        ```sh
+        cd app
+        cargo test
         ```
 
     - To run tests with gtest:
         ```sh
         cargo test -r
         ```
+
+    - To test your contract in Vara Network testnet:
+
+      ```sh
+      cargo test -r -- --ignored
+      ```
+
+    - In case that you write "println" macros in your gtest and gclient tests, to see your logs in your terminal you have to add the flag `-- --no-capture`, example:
+
+      ```sh
+      cargo test -r -- --no-capture
+      cargo test -r -- --ignored --no-capture
+      ```
 
 ## Gitpod
 

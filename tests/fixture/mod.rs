@@ -1,5 +1,7 @@
 use sails_rs::{
-    events::Listener, gtest::{calls::*, System}, prelude::*
+    events::Listener, 
+    gtest::{calls::*, System}, 
+    prelude::*
 };
 use contract_client::{
     ContractFactory,
@@ -10,12 +12,10 @@ use contract_client::{
     }
 };
 
-#[cfg(debug_assertions)]
-pub(crate) const CONTRACT_WASM_PATH: &str = "../../../target/wasm32-gear/debug/contract.opt.wasm";
-#[cfg(not(debug_assertions))]
-pub(crate) const CONTRACT_WASM_PATH: &str = "../../../target/wasm32-gear/release/contract.opt.wasm";
+use contract::WASM_BINARY;
 
 pub(crate) const ADMIN_ID: u64 = 10;
+pub(crate) const ONE_TOKEN: u128 = 1_000_000_000_000;
 
 pub(crate) struct Fixture {
     program_space: GTestRemoting,
@@ -25,11 +25,11 @@ pub(crate) struct Fixture {
 impl Fixture {
     pub(crate) fn new() -> Self {
         let system = System::new();
-        // system.init_logger_with_default_filter("gwasm=debug,gtest=info,sails_rs=debug");
+        system.init_logger_with_default_filter("gwasm=debug,gtest=info,sails_rs=debug");
         system.init_logger();
-        system.mint_to(ADMIN_ID, 1_000_000_000_000_000);
+        system.mint_to(ADMIN_ID, ONE_TOKEN * 1_000);
 
-        let code_id = system.submit_code_file(CONTRACT_WASM_PATH);
+        let code_id = system.submit_code(WASM_BINARY);
 
         let program_space = GTestRemoting::new(system, ADMIN_ID.into());
 
@@ -37,6 +37,13 @@ impl Fixture {
             program_space,
             code_id,
         }
+    }
+
+    pub(crate) fn balance_of(&self, address: ActorId) -> u128 {
+        self
+            .program_space
+            .system()
+            .balance_of(address)
     }
 
     pub(crate) fn contract_code_id(&self) -> CodeId {

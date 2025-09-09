@@ -53,7 +53,7 @@ impl ContractService<'_> {
     pub fn get_value(&mut self, to_return: u128) -> CommandReply<String> {
         let contract_tokens = Syscall::value_available();
 
-        if contract_tokens > to_return {
+        if contract_tokens >= to_return {
             self.emit_event(ContractEvent::ValueSent(to_return)).unwrap();
             CommandReply::new(format!("Value returned: {}", to_return)).with_value(to_return)
         } else {
@@ -84,6 +84,7 @@ impl ContractService<'_> {
         Ok(state.counter)
     }
 
+    #[export]
     pub fn counter_value(&self) -> u64 {
         self.state.borrow().counter
     }
