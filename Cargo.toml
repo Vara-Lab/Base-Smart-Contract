@@ -35,3 +35,4 @@ gear-core = "1.9.1"
 
 [features]
 wasm-binary = []
+std = []
