@@ -28,4 +28,9 @@ fn main() {
     ClientGenerator::from_idl_path(&idl_path)
         .generate_to(contract_client)
         .unwrap();
+
+    // Create client in OUT_DIR to expose client in src/lib
+    ClientGenerator::from_idl_path(&idl_path)
+        .generate_to(PathBuf::from(env::var("OUT_DIR").unwrap()).join("contract_client.rs"))
+        .unwrap();
 }

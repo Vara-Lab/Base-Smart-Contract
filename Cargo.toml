@@ -1,5 +1,5 @@
 [package]
-name = "contract"
+name = "contract-testing"
 version = "0.1.0"
 edition = "2024"
 
@@ -25,7 +25,7 @@ sails-idl-gen = "0.9.1"
 sails-client-gen = "0.9.1"
 
 [dev-dependencies]
-contract = { path = ".", features = ["wasm-binary"] }
+contract-testing = { path = ".", features = ["wasm-binary"] }
 contract-client = { path = "client" }
 sails-rs = { version = "0.9.1", features = ["gtest", "gclient"] }
 tokio = { version = "1.41", features = ["rt", "macros"] }
