@@ -1,4 +1,9 @@
-use contract_client::{
+// use contract_client::{
+//     traits::*,
+//     contract_service::events::ContractServiceEvents
+// };
+
+use contract::client::{
     traits::*,
     contract_service::events::ContractServiceEvents
 };

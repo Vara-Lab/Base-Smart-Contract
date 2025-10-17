@@ -1,4 +1,4 @@
-use contract_client::{contract_service::events::ContractServiceEvents, traits::ContractService};
+use contract::client::{contract_service::events::ContractServiceEvents, traits::ContractService};
 use gclient::Result;
 use sails_rs::{calls::{Action, Call, Query}, events::Listener, futures::StreamExt};
 use fixture_node::*;

@@ -3,7 +3,7 @@ use gclient::{EventProcessor, GearApi, Result};
 use sails_rs::{events::Listener, gclient::calls::GClientRemoting, ActorId, Encode};
 use gstd::MessageId;
 
-use contract_client::{
+use contract::client::{
     ContractFactory,
     ContractService, // client for this service
     contract_service::{

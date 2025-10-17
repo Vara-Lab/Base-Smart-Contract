@@ -8,10 +8,8 @@ mod code {
 #[cfg(all(not(target_arch = "wasm32"), any(feature = "wasm-binary", test)))]
 pub use code::WASM_BINARY_OPT as WASM_BINARY;
 
-#[cfg(test)]
-pub mod client {
-    include!(concat!(env!("OUT_DIR"), "/contract_client.rs"));
-}
+#[cfg(any(test, feature = "contract-client"))]
+pub use contract_client as client;
 
 #[cfg(target_arch = "wasm32")]
 pub use contract_app::wasm::*;

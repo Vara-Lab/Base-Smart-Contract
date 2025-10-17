@@ -3,7 +3,7 @@ use sails_rs::{
     gtest::{calls::*, System}, 
     prelude::*
 };
-use contract_client::{
+use contract::client::{
     ContractFactory,
     ContractService,
     contract_service::{
