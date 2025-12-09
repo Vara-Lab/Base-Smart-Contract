@@ -1,207 +1,204 @@
-// use contract_client::{
-//     traits::*,
-//     contract_service::events::ContractServiceEvents
-// };
-
-use contract::client::{
-    traits::*,
-    contract_service::events::ContractServiceEvents
+use contract_client::{
+    ContractClient, 
+    contract_service::{
+        ContractService, 
+        events::ContractServiceEvents
+    }
+};
+use sails_rs::{
+    ActorId,
+    futures::StreamExt as _
 };
 use fixture::{
     ADMIN_ID,
     Fixture
 };
-use sails_rs::{
-    calls::*,
-    events::*,
-    futures::StreamExt,
-};
-use gstd::ActorId;
+
 
 mod fixture;
 mod utils;
 
 #[tokio::test]
 async fn hello_world() {
+    // Create fixture and get your contract
     let fixture = Fixture::new();
-    let factory = fixture.contract_factory();
-    let contract_id = factory
-        .new()
-        .send_recv(fixture.contract_code_id(), "123")
-        .await
-        .unwrap();
+    let contract_program = fixture
+        .create_contract(vec![1])
+        .await;
 
-    let mut contract_client = fixture.contract_service_client();
-
-    // Listen to contract service events
-    let mut contract_listener = fixture.contract_service_listener();
-    let mut contract_events = contract_listener
+    // get contract service client  
+    let service_client = contract_program.contract_service();
+    
+    // Listen to Service events
+    let service_listener = service_client.listener();
+    let mut service_events = service_listener
         .listen()
         .await
         .unwrap();
 
     // Act
 
-    // Using generated client code for calling Contract service
-    // using the `send_recv` method
-    let result = contract_client
-        .hello()
-        .send_recv(contract_id)
+    // Use generated client code for calling ContractService service.
+    // To send a message, you must specify:
+    // - Service to send the message
+    // - Service method to call
+    // Or use the client that you get before.
+    let response = contract_program
+        .contract_service() // Service
+        .hello() // Service method
         .await
-        .unwrap();
+        .unwrap(); 
 
-    // Assert
-
-    let event = contract_events
+    //  Get event 
+    let event = service_events
         .next()
         .await
         .unwrap();
 
-    assert_eq!(result, format!("Hello {:?}", ActorId::from(ADMIN_ID)));
-    assert_eq!((contract_id, ContractServiceEvents::Hello(ActorId::from(ADMIN_ID))), event)
+    // Assert
+    assert_eq!(format!("Hello {:?}", ActorId::from(ADMIN_ID)), response);
+    assert_eq!((contract_program.id(), ContractServiceEvents::Hello(ActorId::from(ADMIN_ID))), event)
 
 }
 
 #[tokio::test]
 async fn increment_and_decrement() {
+    // Create fixture and get your contract
     let fixture = Fixture::new();
-    let factory = fixture.contract_factory();
-    let contract_id = factory
-        .new()
-        .send_recv(fixture.contract_code_id(), "123")
-        .await
-        .unwrap();
+    let contract_program = fixture
+        .create_contract(vec![1])
+        .await;
 
-    let mut contract_client = fixture.contract_service_client();
-
-    // Listen to contract service events
-    let mut contract_listener = fixture.contract_service_listener();
-    let mut contract_events = contract_listener
+    // get contract service client  
+    let mut service_client = contract_program.contract_service();
+    
+    // Listen to Service events
+    let service_listener = service_client.listener();
+    let mut service_events = service_listener
         .listen()
         .await
         .unwrap();
 
     // Assert increment
 
-    let result = contract_client
-        .increment()
-        .send_recv(contract_id)
+    let response = service_client // Service
+        .increment() // Service method
         .await
-        .unwrap();
+        .unwrap(); 
 
-    assert_eq!(result, 1);
-    
-    let event = contract_events
+    assert_eq!(response, 1);
+
+    let event = service_events
         .next()
         .await
         .unwrap();
-
-    assert_eq!((contract_id, ContractServiceEvents::Incremented), event);
+    
+    assert_eq!((contract_program.id(), ContractServiceEvents::Incremented), event);
 
     // Assert value
 
-    let result = contract_client
+    let response = contract_program
+        .contract_service()
         .counter_value()
-        .recv(contract_id)
         .await
         .unwrap();
 
-    assert_eq!(result, 1);
+    assert_eq!(response, 1);
 
     // Assert decrement
 
-    let result = contract_client
+    let response = contract_program
+        .contract_service()
         .decrement()
-        .send_recv(contract_id)
         .await
         .unwrap();
 
-    assert_eq!(result, 0);
+    assert_eq!(response, 0);
 
-    let event = contract_events
+    let event = service_events
         .next()
         .await
         .unwrap();
-
-    assert_eq!((contract_id, ContractServiceEvents::Decremented), event);
+    
+    assert_eq!((contract_program.id(), ContractServiceEvents::Decremented), event);
 
     // Assert error - decrement value
 
-    let result = contract_client
+    let response = contract_program
+        .contract_service()
         .decrement()
-        .send_recv(contract_id)
         .await;
 
-    assert!(result.is_err());
+    assert!(response.is_err());
 }
+
 
 #[tokio::test]
 async fn send_and_get_value() {
+     // Create fixture and get your contract
     let fixture = Fixture::new();
-    let factory = fixture.contract_factory();
-    let contract_id = factory
-        .new()
-        .send_recv(fixture.contract_code_id(), "123")
-        .await
-        .unwrap();
+    let contract_program = fixture
+        .create_contract(vec![1])
+        .await;
 
-    let mut contract_client = fixture.contract_service_client();
-
-    // Listen to contract service events
-    let mut contract_listener = fixture.contract_service_listener();
-    let mut contract_events = contract_listener
+    // get contract service client  
+    let service_client = contract_program.contract_service();
+    
+    // Listen to Service events
+    let service_listener = service_client.listener();
+    let mut service_events = service_listener
         .listen()
         .await
         .unwrap();
 
     // Assert send value
 
-    let result = contract_client
+    let response = contract_program
+        .contract_service()
         .send_value()
-        .with_value(utils::ONE_TOKEN)
-        .send_recv(contract_id)
+        .with_value(utils::ONE_VARA)
         .await
         .unwrap();
 
-    assert_eq!(result, format!("Value get: {}", utils::ONE_TOKEN));
+    assert_eq!(response, format!("Value get: {}", utils::ONE_VARA));
 
-    let contract_balance = fixture.balance_of(contract_id);
+    let contract_balance = fixture.balance_of(contract_program.id());
 
-    assert_eq!(contract_balance, utils::ONE_TOKEN * 2);
+    assert_eq!(contract_balance, utils::ONE_VARA * 2);
 
-    let event = contract_events
+    let event = service_events
         .next()
         .await
         .unwrap();
 
-    assert_eq!((contract_id, ContractServiceEvents::ValueReceived(utils::ONE_TOKEN)), event);
+    assert_eq!((contract_program.id(), ContractServiceEvents::ValueReceived(utils::ONE_VARA)), event);
 
     // Assert get value
 
-    let result = contract_client
-        .get_value(utils::ONE_TOKEN)
-        .send_recv(contract_id)
+    let response = contract_program
+        .contract_service()
+        .get_value(utils::ONE_VARA)
         .await
         .unwrap();
 
-    assert_eq!(result, format!("Value returned: {}", utils::ONE_TOKEN));
+    assert_eq!(response, format!("Value returned: {}", utils::ONE_VARA));
 
-    let contract_balance = fixture.balance_of(contract_id);
+    let contract_balance = fixture.balance_of(contract_program.id());
 
-    assert_eq!(contract_balance, utils::ONE_TOKEN);
+    assert_eq!(contract_balance, utils::ONE_VARA);
 
-    let event = contract_events
+    let event = service_events
         .next()
         .await
         .unwrap();
 
-    assert_eq!((contract_id, ContractServiceEvents::ValueSent(utils::ONE_TOKEN)), event);
+    assert_eq!((contract_program.id(), ContractServiceEvents::ValueSent(utils::ONE_VARA)), event);
 
     // Assert error - Get balance
-
-    let result = contract_client
-        .get_value(utils::ONE_TOKEN)
-        .send_recv(contract_id)
+    
+    let result = contract_program
+        .contract_service()
+        .get_value(utils::ONE_VARA)
         .await;
 
     assert!(result.is_err());

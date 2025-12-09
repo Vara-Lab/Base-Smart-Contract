@@ -13,8 +13,8 @@ Base smart contract for [Vara Network](https://vara.network/) using Sails.
 - Install necessary rust version and components:
 
 ```bash
-rustup install 1.89.0
-rustup default 1.89.0
+rustup install 1.91.0
+rustup default 1.91.0
 rustup target add wasm32v1-none
 ```
 

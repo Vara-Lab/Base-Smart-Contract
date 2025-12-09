@@ -1,34 +1,36 @@
 #![allow(unused)]
-use gclient::{EventProcessor, GearApi, Result};
-use sails_rs::{events::Listener, gclient::calls::GClientRemoting, ActorId, Encode};
-use gstd::MessageId;
-
-use contract::client::{
-    ContractFactory,
-    ContractService, // client for this service
-    contract_service::{
-        self,
-        events::ContractServiceEvents
-    }
+#[warn(dead_code)]
+use contract_client::{ContractClientCtors, ContractClientProgram};
+use gear_core::{ids::prelude::CodeIdExt};
+use sails_rs::{
+    ActorId,
+    CodeId,
+    Encode,
+    client::{
+        Actor,
+        GclientEnv, GearEnv,
+    },
 };
 
+use gclient::{GearApi, Result};
+use crate::utils;
 use contract::WASM_BINARY;
 
 pub trait ApiUtils {
     fn get_actor_id(&self) -> ActorId;
     fn get_specific_actor_id(&self, value: impl AsRef<str>) -> ActorId;
     async fn total_balance_of(&self, address: ActorId) -> u128;
-} 
+}
 
 pub(crate) struct FixtureNode {
-    program_space: GClientRemoting,
-    contract_address: ActorId,
+    program_space: GclientEnv, //GClientRemoting,
+    contract_code_id: Option<CodeId>,
     api: GearApi,
 }
 
 impl FixtureNode {
     pub(crate) async  fn new() -> Result<Self> {
-        // Connect to testnet instead of create a local node 
+        // Connect to testnet instead of create a local node
         // you can test your contract in a local node followint the next steps:
         // - Download the binary in https://get.gear.rs
         // - Set in your code: let api = GearApi::dev_from_path("../target/tmp/gear").await?;
@@ -38,22 +40,23 @@ impl FixtureNode {
 
         assert!(listener.blocks_running().await?);
 
-        let (message_id, program_id) = init(&api).await;
+        let program_space = GclientEnv::new(api.clone());
 
-        assert!(listener.message_processed(message_id).await?.succeed());
-
-        let program_space = GClientRemoting::new(api.clone());
-
-        Ok(Self { program_space, contract_address: program_id, api })
+        Ok(Self {
+            program_space,
+            contract_code_id: None,
+            api
+        })
     }
 
-    pub(crate) async fn new_client_with_tokwns(&self, name: &str, tokens: u128) -> Self {
-        let new_api = get_new_client_with_tokens(&self.api, name, tokens).await;
-        let program_space = GClientRemoting::new(new_api.clone());
+    pub(crate) async fn new_client_with_tokens(&self, name: &str, tokens: u128) -> Self {
+        let new_api = self.get_new_client_with_tokens(name, tokens).await;
+
+        let program_space = GclientEnv::new(self.api.clone()); // GClientRemoting::new(new_api.clone());
 
         Self {
             program_space,
-            contract_address: self.contract_address,
+            contract_code_id: self.contract_code_id,
             api: new_api
         }
     }
@@ -66,20 +69,64 @@ impl FixtureNode {
         self.api.get_actor_id()
     }
 
-    pub(crate) fn contract_address(&self) -> ActorId {
-        self.contract_address
+    pub(crate) fn contract_code_id(&self) -> Option<CodeId> {
+        self.contract_code_id
     }
 
-    pub(crate) fn contract_factory(&self) -> ContractFactory<GClientRemoting> {
-        ContractFactory::new(self.program_space.clone())
+    // Function to create contract on Vara Network Testnet
+    // Notes:
+    // - In your application constructor, it is recommended that you use names
+    //   that you can easily identify (but, you can still use 'new')
+    pub(crate) async fn create_contract(&self) -> Actor<ContractClientProgram, GclientEnv> {
+        // Assert if the contract was uploaded
+        debug_assert!(self.contract_code_id.is_some(), "The contract was not uploaded to the network, call 'upload_contract_to_testnet'");
+
+        // Get the contract code id to create your contract
+        let code_id = *self.contract_code_id.as_ref().unwrap();
+
+        // NOTE: You must change salt each time you run your tests, if you run
+        // your tests with same salt, you will get an error of "ProgramAlreadyExists"
+        self.program_space
+            .deploy::<ContractClientProgram>(code_id, utils::rand_salt())
+            // If you set params in your applications constructors, you must set your arguments.
+            // Use generated client code for activating Contract program using
+            // the `new` constructor
+            .new()
+            .await
+            .unwrap()
     }
 
-    pub(crate) fn contract_service_client(&self) -> ContractService<GClientRemoting> {
-        ContractService::new(self.program_space.clone())
+    pub(crate) async fn upload_contract_to_testnet(&mut self) -> CodeId {
+        let code_id = self.api.upload_code(WASM_BINARY)
+            .await
+            .map(|(code_id, _)| code_id)
+            .unwrap_or(CodeId::generate(WASM_BINARY));
+
+        self.contract_code_id = Some(code_id);
+
+        code_id
     }
 
-    pub(crate) fn contract_service_listener(&self) -> impl Listener<ContractServiceEvents> {
-        contract_service::events::listener(self.program_space.clone()) 
+    pub(crate) async fn get_new_client_with_tokens(&self, name: &str, tokens_amount: u128) -> GearApi {
+        let api = &self.api;
+        let alice_balance = api.total_balance_of(api.get_actor_id()).await;
+
+        if alice_balance <= tokens_amount {
+            panic!("Alice balance is not enough: {} < {}", alice_balance, tokens_amount);
+        }
+
+        api.transfer_keep_alive(
+            api.get_specific_actor_id(name)
+                .encode()
+                .as_slice()
+                .try_into()
+                .expect("Unexpected invalid `ActorId`."),
+            tokens_amount,
+        )
+        .await
+        .expect("Error transfer");
+
+        api.clone().with(name).expect("Unable to change signer")
     }
 }
 
@@ -108,51 +155,4 @@ impl ApiUtils for GearApi {
     }
 }
 
-pub async fn get_new_client_with_tokens(api: &GearApi, name: &str, tokens_amount: u128) -> GearApi {
-    let alice_balance = api.total_balance_of(api.get_actor_id()).await;
-
-    if alice_balance <= tokens_amount {
-        panic!("Alice balance is not enough: {} < {}", alice_balance, tokens_amount);
-    }
-
-    api.transfer_keep_alive(
-        api.get_specific_actor_id(name)
-            .encode()
-            .as_slice()
-            .try_into()
-            .expect("Unexpected invalid `ActorId`."),
-        tokens_amount,
-    )
-    .await
-    .expect("Error transfer");
-
-    api.clone().with(name).expect("Unable to change signer")
-}
-
-pub async fn init(api: &GearApi) -> (MessageId, ActorId) {
-    let request = ["New".encode(), ().encode()].concat();
-
-    let gas_info = api
-        .calculate_upload_gas(
-            None,
-            WASM_BINARY.into(),
-            request.clone(),
-            0,
-            true,
-        )
-        .await
-        .expect("Error calculate upload gas");
-
-    let (message_id, program_id, _hash) = api
-        .upload_program_bytes(
-            WASM_BINARY,
-            gclient::now_micros().to_le_bytes(),
-            request,
-            gas_info.min_limit,
-            0,
-        )
-        .await
-        .expect("Error upload program bytes");
-
-    (message_id, program_id)
-}
+// te amo mucho <3
