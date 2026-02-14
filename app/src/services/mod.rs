@@ -1,1 +1,1 @@
-pub mod contract_service;
+pub mod service;
