@@ -13,6 +13,7 @@ sails-idl-gen = "0.10.2"
 sails-client-gen = "0.10.2"
 tokio = { version = "1.41", features = ["rt", "macros"] }
 mockall = "0.13.1"
+gstd = "1.10.0"
 
 [dependencies]
 contract-client = { path = "client", optional = true }
